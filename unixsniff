@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Author: Jon Schipp <jonschipp@gmail.com>
+ACTION="$1"
+SOCKET="$2"
+ARGC="$#"
+PROGRAM="$0"
+
+die(){
+  printf "Error: $*\n"
+  exit 1
+}
+
+hi(){
+  printf "$*\n"
+}
+
+check_args(){
+  local argc
+  argc="$1"
+  action="$2"
+  [[ $argc -ge 2 ]] || return 1
+  [[ "$action" =~ ^start|stop$ ]] || return 1
+}
+
+usage(){
+  hi "(U)nix (D)omain (S)ocket Sniffer"
+  hi "Usage: $NAME [start|stop] {/path/to/socket}"
+  exit 1
+}
+
+is_socket(){
+  local socket="$1"
+  [[ -S $socket ]] || die "$socket is not a socket"
+  [[ -w $socket ]] || die "$socket is not writeable"
+}
+
+backup_socket(){
+  local socket="$1"
+  [[ -f "${socket}.original" ]] && die "Backup socket file ${socket}.original already exists"
+  mv "$socket" "${socket}.original" 2>/dev/null || die "Failed to backup socket $socket"
+}
+
+restore_socket(){
+  local socket="$1"
+  [[ -f "${socket}.original}" ]] && die "${socket}.original doesn't exist - did you start first?"
+  mv "${socket}.original" "$socket"  2>/dev/null || die "Failed to restore socket ${socket}.original"
+}
+
+sniff(){
+  local socket="$1"
+  socat -t100 -x -v UNIX-LISTEN:${socket},mode=777,reuseaddr,fork UNIX-CONNECT:${socket}.original || die "Failed to connect to socket"
+}
+
+# Check for proper arguments
+check_args "$#" "$ACTION" || usage "$NAME"
+# Check for dependency
+which socat 1>/dev/null || die "socat is required to run $NAME"
+# Check user input
+is_socket "$SOCKET"
+
+case $ACTION in
+  start) backup_socket "$SOCKET" && sniff "$SOCKET";;
+  stop)  restore_socket "$SOCKET";;
+  *)     usage;;
+esac
