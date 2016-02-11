@@ -1,6 +1,11 @@
 # unixsniff
-Sniffer for unix sockets
+Sniffer for Unix Domain Sockets
 
+## Dependencies
+
+`apt-get install socat bash`
+
+## Use
 Enable sniffing on socket
 ```
 $ ./unixsniff start /var/run/docker.sock
