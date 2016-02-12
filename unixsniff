@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Author: Jon Schipp <jonschipp@gmail.com>
+NAME="$0"
 ACTION="$1"
 SOCKET="$2"
 ARGC="$#"
-PROGRAM="$0"
 
 die(){
   printf "Error: $*\n"
@@ -52,7 +52,7 @@ sniff(){
 }
 
 # Check for proper arguments
-check_args "$#" "$ACTION" || usage "$NAME"
+check_args "$ARGC" "$ACTION" || usage "$NAME"
 # Check for dependency
 which socat 1>/dev/null || die "socat is required to run $NAME"
 # Check user input
